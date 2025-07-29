@@ -46,6 +46,7 @@ classDiagram
     Evaluator ..> List : << use >> 
     Evaluator ..> Classifier : << use >> 
     Evaluator ..> FeatureVector : << use >>
+    Trace ..> datetime : << use >>
 
     namespace data {
         class Event {
@@ -60,6 +61,8 @@ classDiagram
             -label: str
             -events: List < Event >
             +Trace(label: str)
+            +label() str
+            +firstItemTimestamp(): datetime
             +addEvent(activity: str, timestamp: str)
             -indexOfNextItemAfter(event: Event)
             +subtraces() List < Trace >
@@ -72,6 +75,7 @@ classDiagram
             +Log(pathCSV: str, pathFileConf: str)
             +sortLog()
             -addTrace(caseID: str, trace: Trace)
+            +setDominio(dominio: Set < str >)
             +split(randomState: int, testSize: float) Log, Log
             +transformToFeatureVectorList() List < LabeledFeatureVector >
         }
@@ -80,6 +84,7 @@ classDiagram
             -vector[1..*]: Int
             +FeatureVector(dimensione: int)
             +incrementValue(pos: Int)
+            +featureVector() []Int
         }
 
         class LabeledFeatureVector {

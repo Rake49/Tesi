@@ -33,9 +33,14 @@ class Log:
     def _addTrace(self, caseID: str, trace: Trace):
         self._log[caseID] = trace
 
+    def setDominio(self, dominio):
+        self._dominio = dominio
+
     def split(self, randomState: int, testSize: float):
         trainSet = Log()
         testSet = Log()
+        trainSet.setDominio(self._dominio)
+        testSet.setDominio(self._dominio)
         caseIDDomain: Dict[int, str] = {}
         labelCount = {'regular': 0, 'deviant': 0}
         self.sortLog()

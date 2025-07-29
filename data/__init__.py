@@ -6,9 +6,9 @@ This package rapresents every data involved in the application
 """ 
 
 from .log import Log
-from .trace import Trace
+from .featureVector import FeatureVector
 
 __all__ = [
     "Log"
-    "Trace"
+    "FeatureVector"
 ]

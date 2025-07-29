@@ -5,6 +5,9 @@ class FeatureVector:
     def incrementValue(self, pos: int):
         self._vector[pos] = self._vector[pos] + 1
 
+    def featureVector(self):
+        return self._vector
+
     def __repr__(self):
         out = f""
         for el in self._vector:
