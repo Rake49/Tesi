@@ -70,8 +70,9 @@ classDiagram
             -log: Dict < str, Trace >
             -dominio: Set < str >
             +Log(pathCSV: str, pathFileConf: str)
-            -sortLog()
-            +split() Log, Log
+            +sortLog()
+            -addTrace(caseID: str, trace: Trace)
+            +split(randomState: int, testSize: float) Log, Log
             +transformToFeatureVectorList() List < LabeledFeatureVector >
         }
 

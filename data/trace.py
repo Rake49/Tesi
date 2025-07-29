@@ -10,6 +10,9 @@ class Trace:
 
     def label(self):
         return self._label
+    
+    def firstItemTimestamp(self):
+        return self._events[0].timestamp()
 
     @dispatch(str, str)
     def add_event(self, activity: str, timestamp: str):
