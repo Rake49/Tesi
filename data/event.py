@@ -1,13 +1,15 @@
 from datetime import datetime
 
 class Event:
-    def __init__(self, activity: str, timestamp: datetime, label: str):
+    def __init__(self, activity: str, timestamp: str):
         self._activity = activity
-        self._timestamp = datetime.strptime(timestamp, "%d/%m/%Y %H:%M")
-        self._label = label
+        self._timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
     
     def activity(self):
         return self._activity
     
+    def timestamp(self):
+        return self._timestamp
+    
     def __str__(self):
-        return f"ATTIVITA: '{self._activity}'; TIMESTAMP: '{self._timestamp}'; LABEL: '{self._label}'"
+        return f"ATTIVITA: '{self._activity}'; TIMESTAMP: '{self._timestamp}'"

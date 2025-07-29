@@ -1,6 +1,6 @@
 from data import Log
 from pprint import pprint
 
-log = Log("cutCSV.csv")
-print(str(log))
-# pprint(log.activity_count())
+log = Log("sepsis_cases_1.csv", "fileConfig.json")
+# print(str(log))
+print(log.transformToLabeledFeatureVectorList())
