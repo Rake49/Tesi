@@ -8,7 +8,7 @@ classDiagram
     note for Set "Set è una libreria per un tipo di dato in python"
     note for RandomForest "RandomForestClassifier è una libreria in python"
     note for LGBM "LGMBClassifier è una libreria in python"
-    note for Classifier "fit and predict are abstract method"
+    note for Classifier "fit e predict sono metodi astratti"
     Log "1" o-- "1" Dict : << bind >> (str, Trace)
     Trace "1" o-- "1" List : << bind >> (Event)
     Trace "1" o-- "1" str
@@ -16,6 +16,7 @@ classDiagram
     Event "1" o-- "1" datetime
     LabeledFeatureVector "1" o-- "1" str
     Log "1" o-- "1" Set : << bind >> (str)
+    Evaluator "1" o-- "2" str
     Log ..> List : << bind >> (LabeledFeatureVector)
     Log ..> List : << use >> 
     Log ..> LabeledFeatureVector : << use >>
@@ -41,6 +42,10 @@ classDiagram
     Classifier ..> List : << bind >> (LabeledFeatureVector)
     Classifier ..> List : << use >> 
     Classifier ..> FeatureVector : << use >> 
+    Evaluator ..> List : << bind >> (LabeledFeatureVector)
+    Evaluator ..> List : << use >> 
+    Evaluator ..> Classifier : << use >> 
+    Evaluator ..> FeatureVector : << use >>
 
     namespace data {
         class Event {
@@ -103,6 +108,21 @@ classDiagram
             +LGBM(randomState: int)
             +fit(dataset: List < LabeledFeatureVector >)
             +predict(featureVector: FeatureVector)
+        }
+    }
+
+    namespace evaluation {
+        class Evaluator {
+            -positiveFeatureTarget: str = "deviant"
+            -negativeFeatureTarget: str = "regular"
+            -truePositive: int
+            -trueNegative: int
+            -falseNegative: int
+            -falsePositive: int
+            +Evaluator(dataset: List < LabeledFeatureVector >, classifier: Classifier)
+            +precision(label: str): float
+            +recall(label: str): float
+            +f1(label: str): float
         }
     }
 
