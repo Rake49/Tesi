@@ -1,6 +1,7 @@
 from data import Log
 from classifier import RandomForestClassifier, LGBMClassifier
 from evaluation import Evaluator
+from plot import plotConfusionMatrix
 
 log = Log("sepsis_cases_1.csv", "fileConfig.json")
 trainSetLog, testSetLog = log.split(42, 0.34)
@@ -17,5 +18,6 @@ lgbmEval = Evaluator(testSet, lgbm)
 print("precision: ", rfEval.precision(), lgbmEval.precision())
 print("recall: ", rfEval.recall(), lgbmEval.recall())
 print("f1: ", rfEval.f1(), lgbmEval.f1())
+plotConfusionMatrix(rfEval, "RandomForest")
 # print(str(testSet))
 # print(log.transformToLabeledFeatureVectorList())

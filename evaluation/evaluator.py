@@ -23,6 +23,12 @@ class Evaluator:
                 else:
                     self._falsePositive += 1            
 
+    def confusionMatrix(self):
+        return [
+            [self._trueNegative, self._falsePositive],
+            [self._falseNegative, self._truePositive]
+        ]
+
     def precision(self):
         return self._truePositive / (self._falsePositive + self._truePositive)
     
@@ -31,3 +37,11 @@ class Evaluator:
     
     def f1(self):
         return 2 * self.precision() * self.recall() / (self.precision() + self.recall())
+    
+    def positiveFeatureTarget(self):
+        return self._positiveFeatureTarget
+    
+    def negativeFeatureTarget(self):
+        return self._negativeFeatureTarget
+    
+    
