@@ -1,4 +1,6 @@
 import plotly.figure_factory as ff
+import pandas as pd
+import os
 
 def plotConfusionMatrix(evaluator, classifierName):
     labels = [evaluator.negativeFeatureTarget(), evaluator.positiveFeatureTarget()]
@@ -20,3 +22,31 @@ def plotConfusionMatrix(evaluator, classifierName):
         yaxis=dict(autorange="reversed")
     )
     img.write_image(f"statistiche/confusionMatrixFor{classifierName}.png")
+
+
+def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics.xlsx"):
+
+    classifierNames = list(evaluatorsDict.keys())
+    precisionScores = []
+    recallScores = []
+    f1Scores = []
+
+    for classifierName in classifierNames:
+        eval = evaluatorsDict[classifierName]
+        precisionScores.append(eval.precision())
+        recallScores.append(eval.recall())
+        f1Scores.append(eval.f1())
+    data = {
+        'Precision': precisionScores,
+        'Recall': recallScores,
+        'F1-Score': f1Scores
+    }
+    dfMetrics = pd.DataFrame(data, index = classifierNames)
+
+    outputDir = os.path.dirname(pathOUT)
+    if outputDir and not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+    try:
+        dfMetrics.to_excel(pathOUT, index=True)
+    except Exception as e:
+        print(f"Errore durante l'esportazione delle metriche in Excel: {e}")
