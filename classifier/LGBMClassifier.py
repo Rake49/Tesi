@@ -1,7 +1,7 @@
 from .classifier import Classifier
 from lightgbm import LGBMClassifier as LGBM
-from typing import override
 from typing import List
+from typing import override
 import pandas as pd
 
 

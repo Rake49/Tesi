@@ -1,7 +1,7 @@
 from .classifier import Classifier
 from sklearn.ensemble import RandomForestClassifier as RFC
-from typing import override
 from typing import List
+from typing import override
 import pandas as pd
 
 

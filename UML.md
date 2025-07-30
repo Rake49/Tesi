@@ -62,9 +62,9 @@ classDiagram
             -events: List < Event >
             +Trace(label: str)
             +label() str
-            +firstItemTimestamp(): datetime
+            +firstItemTimestamp() datetime
             +addEvent(activity: str, timestamp: str)
-            -indexOfNextItemAfter(event: Event)
+            -indexOfNextItemAfter(event: Event) int
             +subtraces() List < Trace >
             +transformToLabeledFeatureVector(dominio: Set < str >) LabeledFeatureVector
         }
@@ -76,6 +76,7 @@ classDiagram
             +sortLog()
             -addTrace(caseID: str, trace: Trace)
             +setDominio(dominio: Set < str >)
+            +dominio() Set < str >
             +split(randomState: int, testSize: float) Log, Log
             +transformToFeatureVectorList() List < LabeledFeatureVector >
         }
@@ -104,14 +105,14 @@ classDiagram
 
         class RandomForest {
             -model: RandomForestClassifier
-            +RandomForest(randomState: int)
+            +RandomForest(randomState: int, dominio: Set < str >)
             +fit(dataset: List < LabeledFeatureVector >)
             +predict(featureVector: FeatureVector)
         }
 
         class LGBM {
             -model: LGBMClassifier
-            +LGBM(randomState: int)
+            +LGBM(randomState: int, dominio: Set < str >)
             +fit(dataset: List < LabeledFeatureVector >)
             +predict(featureVector: FeatureVector)
         }
@@ -126,9 +127,12 @@ classDiagram
             -falseNegative: int
             -falsePositive: int
             +Evaluator(dataset: List < LabeledFeatureVector >, classifier: Classifier)
-            +precision(label: str): float
-            +recall(label: str): float
-            +f1(label: str): float
+            +precision() float
+            +recall() float
+            +f1() float
+            +confusionMatrix() [][]
+            +positiveFeatureTarget() str
+            +negativeFeatureTarget() str
         }
     }
 

@@ -76,9 +76,6 @@ class Log:
             for subtrace in subtraces:
                 labeledFeatureVectorList.append(subtrace.transformToLabeledFeatureVector(self._dominio))
         return labeledFeatureVectorList
-
-    def log(self):
-        return self._log
     
     def __str__(self):
         out = f""
