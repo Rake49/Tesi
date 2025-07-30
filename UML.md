@@ -9,6 +9,7 @@ classDiagram
     note for RandomForest "RandomForestClassifier è una libreria in python"
     note for LGBM "LGMBClassifier è una libreria in python"
     note for Classifier "fit e predict sono metodi astratti"
+    note for Counterfactual "MAX_PERMITTED_RANGE è una costante che indica il massimo valore che può assumere la feature durante la generazione dei counterfactual"
     Log "1" o-- "1" Dict : << bind >> (str, Trace)
     Trace "1" o-- "1" List : << bind >> (Event)
     Trace "1" o-- "1" str
@@ -17,6 +18,8 @@ classDiagram
     LabeledFeatureVector "1" o-- "1" str
     Log "1" o-- "1" Set : << bind >> (str)
     Evaluator "1" o-- "2" str
+    RandomForest "1" o-- "1" List : << bind >> (str)
+    LGBM "1" o-- "1" List : << bind >> (str)
     Log ..> List : << bind >> (LabeledFeatureVector)
     Log ..> List : << use >> 
     Log ..> LabeledFeatureVector : << use >>
@@ -47,6 +50,9 @@ classDiagram
     Evaluator ..> Classifier : << use >> 
     Evaluator ..> FeatureVector : << use >>
     Trace ..> datetime : << use >>
+    Counterfactual ..> List : << bind >> (LabeledFeatureVector)
+    Counterfactual ..> List : << use >> 
+    Counterfactual ..> Classifier : << use >> 
 
     namespace data {
         class Event {
@@ -105,16 +111,22 @@ classDiagram
 
         class RandomForest {
             -model: RandomForestClassifier
+            -columnsName: List < str >
             +RandomForest(randomState: int, dominio: Set < str >)
             +fit(dataset: List < LabeledFeatureVector >)
             +predict(featureVector: FeatureVector)
+            +model() RandomForestClassifier
+            +columnsName() List < str >
         }
 
         class LGBM {
             -model: LGBMClassifier
+            -columnsName: List < str >
             +LGBM(randomState: int, dominio: Set < str >)
             +fit(dataset: List < LabeledFeatureVector >)
             +predict(featureVector: FeatureVector)
+            +model() LGBMClassifier
+            +columnsName() List < str >
         }
     }
 
@@ -133,6 +145,14 @@ classDiagram
             +confusionMatrix() [][]
             +positiveFeatureTarget() str
             +negativeFeatureTarget() str
+        }
+    }
+
+    namespace counterfactual {
+        class Counterfactual {
+            -MAX_PERMITTED_RANGE: int = 50
+            +Counterfactua(trainSet: List < LabeledFeatureVector>, classifier: Classifier)
+            +generateCounterfactual(testSet: List < LabeledFeatureVector>, classifier: Classifier)
         }
     }
 

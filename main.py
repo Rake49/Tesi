@@ -3,6 +3,7 @@ from classifier import RandomForestClassifier, LGBMClassifier
 from evaluation import Evaluator
 from plot import plotConfusionMatrix
 from plot import exportMetricsToExcel
+from counterfactual import Counterfactual
 
 log = Log("sepsis_cases_1.csv", "fileConfig.json")
 trainSetLog, testSetLog = log.split(42, 0.34)
@@ -23,3 +24,6 @@ print("f1: ", rfEval.f1(), lgbmEval.f1())
 
 plotConfusionMatrix(rfEval, "RandomForest")
 exportMetricsToExcel({"Random Forest": rfEval, "LGBM": lgbmEval})
+
+counterfactualForRF = Counterfactual(trainSet, randomForest)
+counterfactualForRF.generateCounterfactual(testSet, randomForest)

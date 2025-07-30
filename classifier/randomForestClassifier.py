@@ -31,3 +31,9 @@ class RandomForestClassifier(Classifier):
     def predict(self, featureVectors):
         dfPredict = pd.DataFrame(featureVectors, columns = self._columnsName)
         return self._model.predict(dfPredict)
+    
+    def columnsName(self):
+        return self._columnsName
+    
+    def model(self):
+        return self._model
