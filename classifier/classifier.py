@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 
 class Classifier(ABC):
@@ -8,7 +7,7 @@ class Classifier(ABC):
         self._random_state = random_state
 
     @abstractmethod
-    def fit(self, dataset):
+    def fit(self, dataset, dominio):
         pass
 
     @abstractmethod

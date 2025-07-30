@@ -2,23 +2,32 @@ from .classifier import Classifier
 from sklearn.ensemble import RandomForestClassifier as RFC
 from typing import override
 from typing import List
+import pandas as pd
 
 
 class RandomForestClassifier(Classifier):
-    def __init__(self, random_state: int):
+    def __init__(self, random_state: int, dominio):
         super().__init__(random_state)
         self._model: RFC = RFC(random_state = random_state)
+        self._columnsName = list(dominio)
 
-    @override
-    def fit(self, dataset):
+    def separateInputFromOutput(self, dataset):
         raw_data: list[tuple[List[float], str]] = [
             (labeledFeatureVector.featureVector(), labeledFeatureVector.label())
             for labeledFeatureVector in dataset
         ]
         x = list(map(lambda x: x[0], raw_data))
         y = list(map(lambda x: x[1], raw_data))
-        self._model.fit(x, y)
+        return x, y
 
     @override
-    def predict(self, featureVector):
-        return self._model.predict([featureVector])[0]
+    def fit(self, dataset):
+        x, y = self.separateInputFromOutput(dataset)
+        xdf = pd.DataFrame(x, columns = self._columnsName)
+        ys = pd.Series(y, name = "Label")
+        self._model.fit(xdf, ys)
+
+    @override
+    def predict(self, featureVectors):
+        dfPredict = pd.DataFrame(featureVectors, columns = self._columnsName)
+        return self._model.predict(dfPredict)

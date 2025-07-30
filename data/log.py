@@ -36,6 +36,9 @@ class Log:
     def setDominio(self, dominio):
         self._dominio = dominio
 
+    def dominio(self):
+        return self._dominio
+
     def split(self, randomState: int, testSize: float):
         trainSet = Log()
         testSet = Log()
