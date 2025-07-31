@@ -26,4 +26,7 @@ plotConfusionMatrix(rfEval, "RandomForest")
 exportMetricsToExcel({"Random Forest": rfEval, "LGBM": lgbmEval})
 
 counterfactualForRF = Counterfactual(trainSet, randomForest)
-counterfactualForRF.generateCounterfactual(testSet, randomForest, 20)
+counterfactualForRF.generateCounterfactual(testSet, randomForest, "statistiche/counterfactualsRandomForest.xlsx", 20)
+
+counterfactualForLGBM = Counterfactual(trainSet, lgbm)
+counterfactualForLGBM.generateCounterfactual(testSet, lgbm, "statistiche/counterfactualsLGBM.xlsx", 20)

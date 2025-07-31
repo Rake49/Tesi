@@ -23,7 +23,7 @@ class Counterfactual:
         )
         self._exp = dice_ml.Dice(diceData, model, method = 'random')
 
-    def generateCounterfactual(self, testSet, classifier, numExamplesToOutput = None):
+    def generateCounterfactual(self, testSet, classifier, pathOut, numExamplesToOutput = None):
         x, y = classifier.separateInputFromOutput(testSet)
         xdf = pd.DataFrame(x, columns = classifier.columnsName())
         if numExamplesToOutput is not None:
@@ -51,6 +51,5 @@ class Counterfactual:
             combinedDf = pd.concat([originalInstanceDf, cfDataframe])
             allCfsDataframe.append(combinedDf)
         
-        outputPath = "statistiche/counterfactuals.xlsx"
         dfToExport = pd.concat(allCfsDataframe, ignore_index = True)
-        dfToExport.to_excel(outputPath, index = False)
+        dfToExport.to_excel(pathOut, index = False)
