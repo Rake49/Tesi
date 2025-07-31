@@ -23,19 +23,34 @@ class Counterfactual:
         )
         self._exp = dice_ml.Dice(diceData, model, method = 'random')
 
-    def generateCounterfactual(self, testSet, classifier):
+    def generateCounterfactual(self, testSet, classifier, numExamplesToOutput = None):
         x, y = classifier.separateInputFromOutput(testSet)
         xdf = pd.DataFrame(x, columns = classifier.columnsName())
+        if numExamplesToOutput is not None:
+            xdf = xdf.head(numExamplesToOutput)
+        allCfsDataframe = []
         for i in range(len(xdf)):
             queryInstance = xdf.iloc[i : i + 1] # Estrae una singola riga come DataFrame (formato richiesto da DiCE)
             currentPermittedRange = {}
             for feature in classifier.columnsName():
                 currentValue = queryInstance[feature].iloc[0]
                 currentPermittedRange[feature] = [currentValue, self._MAX_PERMITTED_RANGE]
-        cf = self._exp.generate_counterfactuals(
-            xdf,
-            total_CFs = 2,
-            desired_class = 'opposite',
-            permitted_range = currentPermittedRange
-        )
-        cf.visualize_as_dataframe(show_only_changes=True)
+            cf = self._exp.generate_counterfactuals(
+                queryInstance,
+                total_CFs = 2,
+                desired_class = 'opposite',
+                features_to_vary = classifier.columnsName(),
+                permitted_range = currentPermittedRange
+            )
+            cfDataframe = cf.cf_examples_list[0].final_cfs_df
+            cfDataframe['Type'] = 'Counterfactual'
+            cfDataframe['Query_ID'] = i
+            originalInstanceDf = cf.cf_examples_list[0].test_instance_df
+            originalInstanceDf['Type'] = 'Original'
+            originalInstanceDf['Query_ID'] = i
+            combinedDf = pd.concat([originalInstanceDf, cfDataframe])
+            allCfsDataframe.append(combinedDf)
+        
+        outputPath = "statistiche/counterfactuals.xlsx"
+        dfToExport = pd.concat(allCfsDataframe, ignore_index = True)
+        dfToExport.to_excel(outputPath, index = False)
