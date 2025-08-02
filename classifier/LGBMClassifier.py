@@ -4,9 +4,9 @@ from typing import override
 
 
 class LGBMClassifier(Classifier):
-    def __init__(self, random_state: int, dominio, targetFeatureName):
-        super().__init__(random_state, list(dominio), targetFeatureName)
-        self._model: LGBM = LGBM(random_state = random_state)
+    def __init__(self, randomState: int, dominio, targetFeatureName):
+        super().__init__(list(dominio), targetFeatureName)
+        self._model: LGBM = LGBM(random_state = randomState)
 
     @override
     def fit(self, dataset):

@@ -3,8 +3,7 @@ from typing import List
 import pandas as pd
 
 class Classifier(ABC):
-    def __init__(self, random_state: int, columnsList, targetFeatureName):
-        self._random_state = random_state
+    def __init__(self, columnsList, targetFeatureName):
         self._columnsName = columnsList
         self._targetFeatureName = targetFeatureName
 
