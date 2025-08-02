@@ -6,14 +6,14 @@ from plot import exportMetricsToExcel
 from counterfactual import Counterfactual
 
 log = Log("sepsis_cases_1.csv", "fileConfig.json")
-trainSetLog, testSetLog = log.split(42, 0.34)
+trainSetLog, testSetLog = log.split(42, 0.66)
 trainSet = trainSetLog.transformToLabeledFeatureVectorList()
 testSet = testSetLog.transformToLabeledFeatureVectorList()
 
-randomForest = RandomForestClassifier(42, trainSetLog.dominio())
+randomForest = RandomForestClassifier(42, trainSetLog.dominio(), 'Label')
 randomForest.fit(trainSet)
 
-lgbm = LGBMClassifier(42, trainSetLog.dominio())
+lgbm = LGBMClassifier(42, trainSetLog.dominio(), 'Label')
 lgbm.fit(trainSet)
 
 rfEval = Evaluator(testSet, randomForest)

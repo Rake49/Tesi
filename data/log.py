@@ -2,6 +2,7 @@ from typing import Dict, List
 import json
 import csv
 import numpy as np
+from math import ceil
 
 from .trace import Trace
 from .labeledFeatureVector import LabeledFeatureVector
@@ -39,34 +40,20 @@ class Log:
     def dominio(self):
         return self._dominio
 
-    def split(self, randomState: int, testSize: float):
+    def split(self, randomState: int, trainSize: float):
         trainSet = Log()
         testSet = Log()
         trainSet.setDominio(self._dominio)
         testSet.setDominio(self._dominio)
-        caseIDDomain: Dict[int, str] = {}
-        labelCount = {'regular': 0, 'deviant': 0}
         self.sortLog()
+        numTracesInTrain = ceil(len(self._log) * trainSize)
         i = 0
         for caseID, trace in self._log.items():
-            labelCount[trace.label()] += 1
-            caseIDDomain[i] = caseID
-            i += 1
-        for key, value in labelCount.items():
-            labelCount[key] = max(1, value * testSize)
-        rng = np.random.default_rng(randomState)
-        permutation = rng.permutation(len(self._log))
-        for i in permutation:
-            caseID = caseIDDomain[i]
-            trace = self._log[caseID]
-            label = trace.label()
-            if labelCount[label] > 0:
-                testSet._addTrace(caseID, trace)
-                labelCount[label] -= 1
-            else:
+            if i < numTracesInTrain:
                 trainSet._addTrace(caseID, trace)
-        trainSet.sortLog()
-        testSet.sortLog()
+            else:
+                testSet._addTrace(caseID, trace)
+            i += 1
         return trainSet, testSet
 
     def transformToLabeledFeatureVectorList(self):
