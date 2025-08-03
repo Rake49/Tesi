@@ -16,8 +16,8 @@ randomForest.fit(trainSet)
 lgbm = LGBMClassifier(42, trainSetLog.dominio(), 'Label')
 lgbm.fit(trainSet)
 
-rfEval = Evaluator(testSet, randomForest)
-lgbmEval = Evaluator(testSet, lgbm)
+rfEval = Evaluator(testSet, randomForest, log.labels())
+lgbmEval = Evaluator(testSet, lgbm, log.labels())
 print("precision: ", rfEval.precision(), lgbmEval.precision())
 print("recall: ", rfEval.recall(), lgbmEval.recall())
 print("f1: ", rfEval.f1(), lgbmEval.f1())
@@ -25,8 +25,12 @@ print("f1: ", rfEval.f1(), lgbmEval.f1())
 plotConfusionMatrix(rfEval, "RandomForest")
 exportMetricsToExcel({"Random Forest": rfEval, "LGBM": lgbmEval})
 
-counterfactualForRF = Counterfactual(trainSet, randomForest)
-counterfactualForRF.generateCounterfactual(testSet, randomForest, "statistiche/counterfactualsRandomForest.xlsx", 20)
+minPermittedRange = []
+for val in testSet[0].featureVector():
+    minPermittedRange.append(val)
 
-counterfactualForLGBM = Counterfactual(trainSet, lgbm)
-counterfactualForLGBM.generateCounterfactual(testSet, lgbm, "statistiche/counterfactualsLGBM.xlsx", 20)
+counterfactualForRF = Counterfactual(trainSet, randomForest, minPermittedRange, 50)
+counterfactualForRF.generateCounterfactual([testSet[0].featureVector()], randomForest.columnsName(), "statistiche/counterfactualsRandomForest.xlsx")
+
+counterfactualForLGBM = Counterfactual(trainSet, lgbm, minPermittedRange, 50)
+counterfactualForLGBM.generateCounterfactual([testSet[0].featureVector()], lgbm.columnsName(), "statistiche/counterfactualsLGBM.xlsx")

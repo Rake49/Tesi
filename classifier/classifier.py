@@ -32,3 +32,6 @@ class Classifier(ABC):
     
     def columnsName(self):
         return self._columnsName
+    
+    def targetFeatureName(self):
+        return self._targetFeatureName

@@ -11,6 +11,7 @@ class Log:
     def __init__(self, pathCSV: str = None, pathFileConf: str = None):
         self._log: Dict[str, Trace] = {}
         self._dominio = set()
+        self._labels = set()
         if pathCSV == None and pathFileConf == None:
             return
         # csv = pd.read_csv(pathCSV, delimiter = ";", skiprows = 1, header = None)
@@ -26,6 +27,7 @@ class Log:
                 if row[indiciColonne[0]] not in self._log:
                     self._log[row[indiciColonne[0]]] = Trace(row[indiciColonne[3]])
                 self._dominio.add(row[indiciColonne[1]])
+                self._labels.add(row[indiciColonne[3]])
                 self._log[row[indiciColonne[0]]].add_event(row[indiciColonne[1]], row[indiciColonne[2]])
 
     def sortLog(self):
@@ -39,6 +41,9 @@ class Log:
 
     def dominio(self):
         return self._dominio
+    
+    def labels(self):
+        return list(self._labels)
 
     def split(self, randomState: int, trainSize: float):
         trainSet = Log()

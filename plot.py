@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 def plotConfusionMatrix(evaluator, classifierName):
-    labels = [evaluator.negativeFeatureTarget(), evaluator.positiveFeatureTarget()]
+    labels = evaluator.labels()
     x = [f"Predicted {i}" for i in labels]
     y = [f"Actual {i}" for i in labels]
     confusionMatrix = evaluator.confusionMatrix()
