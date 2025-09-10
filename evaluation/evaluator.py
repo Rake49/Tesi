@@ -5,8 +5,8 @@ from sklearn.metrics import f1_score
 
 class Evaluator:
     def __init__(self, dataset, classifier, labels):
-        x, self._actual = classifier.separateInputFromOutput(dataset)
-        self._predictions = classifier.predict(x)
+        x, self._actual = dataset.separateInputFromOutput()
+        self._predictions = classifier.predict(dataset.toPandasDF(x))
         self._labels = labels
                   
 

@@ -1,11 +1,11 @@
 from typing import Dict, List
 import json
 import csv
-import numpy as np
 from math import ceil
 
 from .trace import Trace
 from .labeledFeatureVector import LabeledFeatureVector
+from .labeledFeatureVectorDataset import LabeledFeatureVectorDataset
 
 class Log:
     def __init__(self, pathCSV: str = None, pathFileConf: str = None):
@@ -38,14 +38,11 @@ class Log:
 
     def setDominio(self, dominio):
         self._dominio = dominio
-
-    def dominio(self):
-        return self._dominio
     
     def labels(self):
         return list(self._labels)
 
-    def split(self, randomState: int, trainSize: float):
+    def split(self, trainSize: float):
         trainSet = Log()
         testSet = Log()
         trainSet.setDominio(self._dominio)
@@ -62,11 +59,11 @@ class Log:
         return trainSet, testSet
 
     def transformToLabeledFeatureVectorList(self):
-        labeledFeatureVectorList: List[LabeledFeatureVector] = []
+        labeledFeatureVectorList = LabeledFeatureVectorDataset(list(self._dominio), 'Label')
         for caseID, trace in self._log.items():
             subtraces = trace.subtraces()
             for subtrace in subtraces:
-                labeledFeatureVectorList.append(subtrace.transformToLabeledFeatureVector(self._dominio))
+                labeledFeatureVectorList.addLabeledFeatureVector(subtrace.transformToLabeledFeatureVector(self._dominio))
         return labeledFeatureVectorList
     
     def __str__(self):
