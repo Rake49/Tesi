@@ -25,4 +25,7 @@ class Evaluator:
     def labels(self):
         return self._labels
     
+    def predictions(self):
+        return self._predictions
+    
     

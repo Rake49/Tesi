@@ -38,14 +38,16 @@ class Counterfactual:
         cf = self._exp.generate_counterfactuals(
             xdf,
             total_CFs = 3,
-            desired_class = ('opposite' if changeToOpposite else self._le.transform([changeToLabel])[0]),
+            desired_class = ('opposite' if changeToOpposite else int(self._le.transform([changeToLabel])[0])),
             features_to_vary = columnsName,
             permitted_range = currentPermittedRange
         )
         cfDataframe = cf.cf_examples_list[0].final_cfs_df
+        cfDataframe['Label'] = self._le.inverse_transform(cfDataframe['Label'].astype(int))
         cfDataframe['Type'] = 'Counterfactual'
         originalInstanceDf = cf.cf_examples_list[0].test_instance_df
         originalInstanceDf['Type'] = 'Original'
+        originalInstanceDf['Label'] = self._le.inverse_transform(originalInstanceDf['Label'].astype(int))
         return pd.concat([originalInstanceDf, cfDataframe])
     
     def exportToExcel(self, dfToExport, pathOut):

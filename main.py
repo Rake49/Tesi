@@ -23,19 +23,29 @@ print("recall: ", rfEval.recall(), lgbmEval.recall())
 print("f1: ", rfEval.f1(), lgbmEval.f1())
 
 plotConfusionMatrix(rfEval, "RandomForest")
+plotConfusionMatrix(lgbmEval, "LGBM")
 exportMetricsToExcel({"Random Forest": rfEval, "LGBM": lgbmEval})
 
-vectorForCounterfactual = next((labeledFV for labeledFV in trainSet.dataset() if labeledFV.label() == 'deviant'), None)
+_, testSetLabels = testSet.separateInputFromOutput()
+index = next((
+    index for index, (pred, label) in enumerate(zip(rfEval.predictions(), testSetLabels)) 
+    if pred == label and label == 'deviant'), None)
+vectorForRF = testSet.dataset()[index]
+index = next((
+    index for index, (pred, label) in enumerate(zip(lgbmEval.predictions(), testSetLabels)) 
+    if pred == label and label == 'deviant'), None)
+vectorForLGBM = testSet.dataset()[index]
+
 minPermittedRange = []
 maxPermittedRange = []
-for val in vectorForCounterfactual.featureVector():
+for val in vectorForRF.featureVector():
     minPermittedRange.append(val)
     maxPermittedRange.append(50)
 
 counterfactualForRF = Counterfactual(trainSet, randomForest, minPermittedRange, maxPermittedRange)
-counterfactualDataFrameRF = counterfactualForRF.generateCounterfactual([vectorForCounterfactual.featureVector()], trainSet.columnsName(), True)
+counterfactualDataFrameRF = counterfactualForRF.generateCounterfactual([vectorForRF.featureVector()], trainSet.columnsName(), True)
 counterfactualForRF.exportToExcel(counterfactualDataFrameRF, "statistiche/counterfactualsRandomForest.xlsx")
 
 counterfactualForLGBM = Counterfactual(trainSet, lgbm, minPermittedRange, maxPermittedRange)
-counterfactualDataFrameLGBM = counterfactualForLGBM.generateCounterfactual([vectorForCounterfactual.featureVector()], trainSet.columnsName(), False, 'regular')
+counterfactualDataFrameLGBM = counterfactualForLGBM.generateCounterfactual([vectorForLGBM.featureVector()], trainSet.columnsName(), False, 'regular')
 counterfactualForLGBM.exportToExcel(counterfactualDataFrameLGBM, "statistiche/counterfactualsLGBM.xlsx")
