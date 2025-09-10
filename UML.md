@@ -9,7 +9,7 @@ classDiagram
     note for RandomForest "RandomForestClassifier è una classe in python"
     note for LGBM "LGMBClassifier è una classe in python"
     note for Classifier "fit e predict sono metodi astratti"
-    note for Classifier "DataFrame e Series sono classi della libreria pandas"
+    note for LabeledFeatureVectorDataset "DataFrame e Series sono classi della libreria pandas"
     note for Counterfactual "Dice è una classe della libreria dice_ml che calcola i counterfactual"
     Log "1" o-- "1" Dict : << bind >> (str, Trace)
     Trace "1" o-- "1" List : << bind >> (Event)
@@ -21,11 +21,10 @@ classDiagram
     Evaluator "1" o-- "3" List : << bind >> (str)
     Classifier "1" o-- "1" List : << bind >> (str)
     Classifier "1" o-- "1" str
-    Log ..> List : << bind >> (LabeledFeatureVector)
-    Log ..> List : << use >> 
     Log ..> LabeledFeatureVector : << use >>
     Log ..> Trace : << use >>
     Log ..> str : << use >>
+    Log ..> LabeledFeatureVectorDataset : << use >>
     Trace ..> str : << use >>
     Event ..> str : << use >>
     FeatureVector ..> str : << use >>
@@ -47,16 +46,13 @@ classDiagram
     LGBM ..> Set : << use >>
     RandomForest ..> Set : << bind >> (str)
     RandomForest ..> Set : << use >>
-    Classifier ..> List : << bind >> (LabeledFeatureVector)
-    Classifier ..> List : << use >> 
+    Classifier ..> LabeledFeatureVectorDataset : << use >> 
     Classifier ..> FeatureVector : << use >> 
-    Evaluator ..> List : << bind >> (LabeledFeatureVector)
-    Evaluator ..> List : << use >> 
+    Evaluator ..> LabeledFeatureVectorDataset : << use >> 
     Evaluator ..> Classifier : << use >> 
     Evaluator ..> FeatureVector : << use >>
     Trace ..> datetime : << use >>
-    Counterfactual ..> List : << bind >> (LabeledFeatureVector)
-    Counterfactual ..> List : << use >> 
+    Counterfactual ..> LabeledFeatureVectorDataset : << use >> 
     Counterfactual ..> Classifier : << use >> 
     Counterfactual ..> FeatureVector : << use >>
 
@@ -90,7 +86,7 @@ classDiagram
             +setDominio(dominio: Set < str >)
             +dominio() Set < str >
             +split(randomState: int, trainSize: float) Log, Log
-            +transformToFeatureVectorList() List < LabeledFeatureVector >
+            +transformToFeatureVectorList() LabeledFeatureVectorDataset
         }
 
         class FeatureVector {
@@ -106,27 +102,35 @@ classDiagram
             +label() str
         }
 
+        class LabeledFeatureVectorDataset {
+            -dataset: List < LabeledFeatureVector >
+            -columnsName: List < str >
+            -targetFeatureName: str
+            +LabeledFeatureVectorDataset()
+            +addLabeledFeatureVector(vector: LabeledFeatureVector)
+            +separateInputFromOutput() List < FeatureVector >, List < str >
+            +toPandasDF(data: List < [] >) DataFrame
+            +toPandasSeries(data: List < str >) Series
+            +dataset() List < LabeledFeatureVector >
+            +columnsName() List < str >
+            +targetFeatureName() str
+        }
+
     }
 
     namespace classifier {
         class Classifier {
             << abstract >>
-            -columnsName: List < str >
-            -targetFeatureName: str
             +Classifier(columnsList: List < str >, targetFeatureName: str)
-            +fit(dataset: List < LabeledFeatureVector >)
-            +predict(featureVector: FeatureVector)
-            +separateInputFromOutput(dataset: List < LabeledFeatureVector >)
-            +toPandasDF(data: List < [] >) DataFrame
-            +toPandasSeries(data: List < str >) Series
-            +columnsName() List < str >
+            +fit(dataset: LabeledFeatureVectorDataset)
+            +predict(featureVector: FeatureVector): str
         }
 
         class RandomForest {
             -model: RandomForestClassifier
             +RandomForest(randomState: int, dominio: Set < str >, targetFeatureName: str)
-            +fit(dataset: List < LabeledFeatureVector >)
-            +predict(featureVector: FeatureVector)
+            +fit(dataset: LabeledFeatureVectorDataset)
+            +predict(featureVector: FeatureVector) str
             +model() RandomForestClassifier
             
         }
@@ -134,8 +138,8 @@ classDiagram
         class LGBM {
             -model: LGBMClassifier
             +LGBM(randomState: int, dominio: Set < str >, targetFeatureName: str)
-            +fit(dataset: List < LabeledFeatureVector >)
-            +predict(featureVector: FeatureVector)
+            +fit(dataset: LabeledFeatureVectorDataset)
+            +predict(featureVector: FeatureVector) str
             +model() LGBMClassifier
         }
     }
@@ -145,8 +149,8 @@ classDiagram
             -actual: List < str >
             -predictions: List < str >
             -labels: List < str >
-            +Evaluator(dataset: List < LabeledFeatureVector >, classifier: Classifier, labels: List < str >)
-            +confusionMatrix() [][]
+            +Evaluator(dataset: LabeledFeatureVectorDataset, classifier: Classifier, labels: List < str >)
+            +confusionMatrix() [][] int int
             +precision() float
             +recall() float
             +f1() float
@@ -156,10 +160,10 @@ classDiagram
     namespace counterfactual {
         class Counterfactual {
             -explainer: Dice
-            -minPermittedRange: []
-            -maxPermittedRange: []
-            +Counterfactua(trainSet: List < LabeledFeatureVector>, classifier: Classifier, minPermittedRange: [], maxPermittedRange: [])
-            +generateCounterfactual(featureVector: FeatureVector, columnsName: List < str >)
+            -minPermittedRange[]: int
+            -maxPermittedRange[]: int
+            +Counterfactua(dataset: LabeledFeatureVectorDataset, classifier: Classifier, minPermittedRange: []int, maxPermittedRange: []int)
+            +generateCounterfactual(featureVector: FeatureVector, columnsName: List < str >, changeToOpposite: bool, changeToLabel: str) DataFrame
         }
     }
 
