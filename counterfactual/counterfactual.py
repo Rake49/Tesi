@@ -7,6 +7,7 @@ class Counterfactual:
     def __init__(self, trainSet, classifier, minPermittedRange, maxPermittedRange):
         self._minPermittedRange = minPermittedRange
         self._maxPermittedRange = maxPermittedRange
+        self._le = classifier.labelEncoder()
         x, y = trainSet.separateInputFromOutput()
 
         xdf = trainSet.toPandasDF(x)
@@ -37,7 +38,7 @@ class Counterfactual:
         cf = self._exp.generate_counterfactuals(
             xdf,
             total_CFs = 3,
-            desired_class = ('opposite' if changeToOpposite else changeToLabel),
+            desired_class = ('opposite' if changeToOpposite else self._le.transform([changeToLabel])[0]),
             features_to_vary = columnsName,
             permitted_range = currentPermittedRange
         )

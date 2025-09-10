@@ -12,3 +12,8 @@ class Classifier(ABC):
     def predict(self, featureVectors):
         pass
     
+    def decode(self, yPredEncoded):
+        return self._le.inverse_transform(yPredEncoded)
+    
+    def labelEncoder(self):
+        return self._le
