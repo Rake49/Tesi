@@ -7,10 +7,10 @@ Package for classifier
 
 from .classifier import Classifier
 from .randomForestClassifier import RandomForestClassifier
-from .LGBMClassifier import LGBMClassifier
+from .XGBoostClassifier import XGBoostClassifier
 
 __all__ = [
     "Classifier", 
     "RandomForestClassifier"
-    "LGBMClassifier"
+    "XGBoostClassifier"
 ]

@@ -1,5 +1,5 @@
 from data import Log
-from classifier import RandomForestClassifier, LGBMClassifier
+from classifier import RandomForestClassifier, XGBoostClassifier
 from evaluation import Evaluator
 from plot import plotConfusionMatrix
 from plot import exportMetricsToExcel
@@ -12,13 +12,13 @@ trainSetLog, testSetLog = log.split(0.66)
 trainSet = trainSetLog.transformToLabeledFeatureVectorList()
 testSet = testSetLog.transformToLabeledFeatureVectorList()
 
-randomForest = RandomForestClassifier(42)
+randomForest = RandomForestClassifier(42, {'deviant': 5, 'regular': 1})
 randomForest.fit(trainSet)
 
 # _, y = trainSet.separateInputFromOutput()
 # classes = np.unique(y)
 # weights = compute_class_weight(class_weight='balanced', classes=classes, y=y)
-lgbm = LGBMClassifier(42)
+lgbm = XGBoostClassifier(42, {'deviant': 5, 'regular': 1})
 lgbm.fit(trainSet)
 
 rfEval = Evaluator(testSet, randomForest, log.labels())
@@ -28,8 +28,8 @@ print("recall: ", rfEval.recall(), lgbmEval.recall())
 print("f1: ", rfEval.f1(), lgbmEval.f1())
 
 plotConfusionMatrix(rfEval, "RandomForest")
-plotConfusionMatrix(lgbmEval, "LGBM")
-exportMetricsToExcel({"Random Forest": rfEval, "LGBM": lgbmEval})
+plotConfusionMatrix(lgbmEval, "XGBoost")
+exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": lgbmEval})
 
 _, testSetLabels = testSet.separateInputFromOutput()
 index = next((
@@ -53,4 +53,4 @@ counterfactualForRF.exportToExcel(counterfactualDataFrameRF, "statistiche/counte
 
 counterfactualForLGBM = Counterfactual(trainSet, lgbm, minPermittedRange, maxPermittedRange)
 counterfactualDataFrameLGBM = counterfactualForLGBM.generateCounterfactual([vectorForLGBM.featureVector()], trainSet.columnsName(), False, 'regular')
-counterfactualForLGBM.exportToExcel(counterfactualDataFrameLGBM, "statistiche/counterfactualsLGBM.xlsx")
+counterfactualForLGBM.exportToExcel(counterfactualDataFrameLGBM, "statistiche/counterfactualsXGBoost.xlsx")

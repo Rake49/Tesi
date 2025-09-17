@@ -6,11 +6,12 @@ import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 
 
-class LGBMClassifier(Classifier):
-    def __init__(self, randomState: int):
+class XGBoostClassifier(Classifier):
+    def __init__(self, randomState: int, weights):
         super().__init__()
-        self._model: XGB = XGB(random_state = randomState)
         self._le = LabelEncoder()
+        # self._weights = weights
+        self._model: XGB = XGB(random_state = randomState)
 
     @override
     def fit(self, dataset):
@@ -19,6 +20,11 @@ class LGBMClassifier(Classifier):
         yEncoded = self._le.fit_transform(y)
         classes = np.unique(yEncoded)
         weights = compute_class_weight(class_weight='balanced', classes=classes, y=yEncoded)
+
+        # weights = {}
+        # for label, weight in self._weights.items():
+        #     weights[self._le.transform([label])[0]] = weight
+
         sampleWeights = np.array([weights[label] for label in yEncoded])
         ys = dataset.toPandasSeries(yEncoded)
         self._model.fit(xdf, ys, sample_weight=sampleWeights)
@@ -29,3 +35,6 @@ class LGBMClassifier(Classifier):
     
     def model(self):
         return self._model
+    
+    def weights(self):
+        return self._weights
