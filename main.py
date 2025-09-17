@@ -4,6 +4,8 @@ from evaluation import Evaluator
 from plot import plotConfusionMatrix
 from plot import exportMetricsToExcel
 from counterfactual import Counterfactual
+import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 
 log = Log("sepsis_cases_1.csv", "fileConfig.json")
 trainSetLog, testSetLog = log.split(0.66)
@@ -13,6 +15,9 @@ testSet = testSetLog.transformToLabeledFeatureVectorList()
 randomForest = RandomForestClassifier(42)
 randomForest.fit(trainSet)
 
+# _, y = trainSet.separateInputFromOutput()
+# classes = np.unique(y)
+# weights = compute_class_weight(class_weight='balanced', classes=classes, y=y)
 lgbm = LGBMClassifier(42)
 lgbm.fit(trainSet)
 

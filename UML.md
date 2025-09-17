@@ -7,10 +7,11 @@ classDiagram
     note for List "List è una classe per un tipo di dato in python"
     note for Set "Set è una classe per un tipo di dato in python"
     note for RandomForest "RandomForestClassifier è una classe in python"
-    note for LGBM "LGMBClassifier è una classe in python"
+    note for CatBoost "CatBoostClassifier è una classe in python"
     note for Classifier "fit e predict sono metodi astratti"
     note for LabeledFeatureVectorDataset "DataFrame e Series sono classi della libreria pandas"
     note for Counterfactual "Dice è una classe della libreria dice_ml che calcola i counterfactual"
+    note for Counterfactual "CounterfactualExplanations è una classe della libreria dice_ml che contiene i counterfactual generati"
     Log "1" o-- "1" Dict : << bind >> (str, Trace)
     Trace "1" o-- "1" List : << bind >> (Event)
     Trace "1" o-- "1" str
@@ -41,9 +42,9 @@ classDiagram
     LabeledFeatureVector ..> Set : << use >>
     LabeledFeatureVector --|> FeatureVector : extends
     RandomForest --|> Classifier : extends
-    LGBM --|> Classifier : extends
-    LGBM ..> Set : << bind >> (str)
-    LGBM ..> Set : << use >>
+    CatBoost --|> Classifier : extends
+    CatBoost ..> Set : << bind >> (str)
+    CatBoost ..> Set : << use >>
     RandomForest ..> Set : << bind >> (str)
     RandomForest ..> Set : << use >>
     Classifier ..> LabeledFeatureVectorDataset : << use >> 
@@ -53,8 +54,13 @@ classDiagram
     Evaluator ..> FeatureVector : << use >>
     Trace ..> datetime : << use >>
     Counterfactual ..> LabeledFeatureVectorDataset : << use >> 
-    Counterfactual ..> Classifier : << use >> 
+    Counterfactual "1" o-- "1" Classifier
     Counterfactual ..> FeatureVector : << use >>
+    Counterfactual ..> List : << bind >> (str)
+    LabeledFeatureVectorDataset "1" o-- "1" List : << bind >> (str, LabeledFeatureVector)
+    LabeledFeatureVectorDataset "1" o-- "1" List : << bind >> (str)
+    LabeledFeatureVectorDataset "1" o-- "1" str
+    
 
     namespace data {
         class Event {
@@ -64,7 +70,6 @@ classDiagram
             +activity() str
             +timestamp() datetime
         }
-
         class Trace {
             -label: str
             -events: List < Event >
@@ -76,7 +81,6 @@ classDiagram
             +subtraces() List < Trace >
             +transformToLabeledFeatureVector(dominio: Set < str >) LabeledFeatureVector
         }
-
         class Log {
             -log: Dict < str, Trace >
             -dominio: Set < str >
@@ -88,36 +92,32 @@ classDiagram
             +split(randomState: int, trainSize: float) Log, Log
             +transformToFeatureVectorList() LabeledFeatureVectorDataset
         }
-
         class FeatureVector {
             -vector[1..*]: Int
             +FeatureVector(dimensione: int)
             +incrementValue(pos: Int)
             +featureVector() []Int
         }
-
         class LabeledFeatureVector {
             -label: str
             +LabeledFeatureVector(label: str, dimensione: int)
             +label() str
         }
-
         class LabeledFeatureVectorDataset {
-            -dataset: List < LabeledFeatureVector >
+            -dataset: List < str, LabeledFeatureVector >
             -columnsName: List < str >
             -targetFeatureName: str
             +LabeledFeatureVectorDataset()
-            +addLabeledFeatureVector(vector: LabeledFeatureVector)
+            +addLabeledFeatureVector(caseID: str, vector: LabeledFeatureVector)
             +separateInputFromOutput() List < FeatureVector >, List < str >
             +toPandasDF(data: List < [] >) DataFrame
             +toPandasSeries(data: List < str >) Series
             +dataset() List < LabeledFeatureVector >
             +columnsName() List < str >
             +targetFeatureName() str
+            +selectCaseID(caseID: int) List < str, LabeledFeatureVector >
         }
-
     }
-
     namespace classifier {
         class Classifier {
             << abstract >>
@@ -125,25 +125,21 @@ classDiagram
             +fit(dataset: LabeledFeatureVectorDataset)
             +predict(featureVector: FeatureVector): str
         }
-
         class RandomForest {
             -model: RandomForestClassifier
-            +RandomForest(randomState: int, dominio: Set < str >, targetFeatureName: str)
+            +RandomForest(randomState: int, weights: Dict < str, float >)
             +fit(dataset: LabeledFeatureVectorDataset)
             +predict(featureVector: FeatureVector) str
             +model() RandomForestClassifier
-            
         }
-
-        class LGBM {
-            -model: LGBMClassifier
-            +LGBM(randomState: int, dominio: Set < str >, targetFeatureName: str)
+        class CatBoost {
+            -model: CatBoostClassifier
+            +CatBoost(randomState: int, weights: Dict < str, float >)
             +fit(dataset: LabeledFeatureVectorDataset)
             +predict(featureVector: FeatureVector) str
-            +model() LGBMClassifier
+            +model() CatBoostClassifier
         }
     }
-
     namespace evaluation {
         class Evaluator {
             -actual: List < str >
@@ -156,34 +152,27 @@ classDiagram
             +f1() float
         }
     }
-
     namespace counterfactual {
         class Counterfactual {
             -explainer: Dice
-            -minPermittedRange[]: int
-            -maxPermittedRange[]: int
-            +Counterfactua(dataset: LabeledFeatureVectorDataset, classifier: Classifier, minPermittedRange: []int, maxPermittedRange: []int)
-            +generateCounterfactual(featureVector: FeatureVector, columnsName: List < str >, changeToOpposite: bool, changeToLabel: str) DataFrame
+            -classifier: Classifier
+            +Counterfactua(dataset: LabeledFeatureVectorDataset, classifier: Classifier)
+            +generateCounterfactual(featureVector: FeatureVector, caseID: str, columnsName: List < str >, minPermittedRange: List < int >, maxPermittedRange: List < int >, changeToOpposite: bool, changeToLabel: str) DataFrame
+            -closestCounterfactual(originalVector: FeatureVector, columnsName: List < str >, cf: CounterfactualExplanations) DataFrame
         }
     }
-
     class Dict {
         <<Interface>>
     }
-
     class Set {
         <<Interface>>
     }
-
     class List {
         <<Interface>>
     }
-
     class str {
-
     }
-
     class datetime {
-
     }
+
 ```

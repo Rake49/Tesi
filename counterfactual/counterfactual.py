@@ -42,6 +42,7 @@ class Counterfactual:
             features_to_vary = columnsName,
             permitted_range = currentPermittedRange
         )
+        print(type(cf))
         cfDataframe = cf.cf_examples_list[0].final_cfs_df
         cfDataframe['Label'] = self._le.inverse_transform(cfDataframe['Label'].astype(int))
         cfDataframe['Type'] = 'Counterfactual'
