@@ -1,7 +1,7 @@
 
 import dice_ml
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+import numpy as np
 
 class Counterfactual:
     def __init__(self, trainSet, classifier, minPermittedRange, maxPermittedRange):
@@ -37,18 +37,26 @@ class Counterfactual:
 
         cf = self._exp.generate_counterfactuals(
             xdf,
-            total_CFs = 3,
+            total_CFs = 10,
             desired_class = ('opposite' if changeToOpposite else int(self._le.transform([changeToLabel])[0])),
             features_to_vary = columnsName,
             permitted_range = currentPermittedRange
         )
-        cfDataframe = cf.cf_examples_list[0].final_cfs_df
+        cfDataframe = self.closestCounterfactual(featureVector, columnsName, cf.cf_examples_list[0].final_cfs_df)
         cfDataframe['Label'] = self._le.inverse_transform(cfDataframe['Label'].astype(int))
         cfDataframe['Type'] = 'Counterfactual'
         originalInstanceDf = cf.cf_examples_list[0].test_instance_df
         originalInstanceDf['Type'] = 'Original'
         originalInstanceDf['Label'] = self._le.inverse_transform(originalInstanceDf['Label'].astype(int))
         return pd.concat([originalInstanceDf, cfDataframe])
+    
+    def closestCounterfactual(self, originalVector, columnsNames, cf):
+        originalVectorArray = np.array(originalVector, dtype=float)
+        cfArrays = cf[columnsNames].to_numpy(dtype=float)
+        distances = [np.linalg.norm(originalVectorArray - cfArray) for cfArray in cfArrays]
+        bestIndex = np.argmin(distances)
+        return cf.iloc[[bestIndex]].copy()
+         
     
     def exportToExcel(self, dfToExport, pathOut):
         dfToExport.to_excel(pathOut, index = False)

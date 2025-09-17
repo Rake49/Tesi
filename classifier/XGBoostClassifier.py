@@ -1,29 +1,33 @@
 from .classifier import Classifier
-from sklearn.ensemble import RandomForestClassifier as RFC
+from xgboost import XGBClassifier as XGB
 from typing import override
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 
 
-class RandomForestClassifier(Classifier):
+class XGBoostClassifier(Classifier):
     def __init__(self, randomState: int, weights):
         super().__init__()
         self._le = LabelEncoder()
         # self._weights = weights
-        self._model: RFC = RFC(random_state = randomState, class_weight='balanced')
+        self._model: XGB = XGB(random_state = randomState)
 
     @override
     def fit(self, dataset):
         x, y = dataset.separateInputFromOutput()
         xdf = dataset.toPandasDF(x)
         yEncoded = self._le.fit_transform(y)
+        classes = np.unique(yEncoded)
+        weights = compute_class_weight(class_weight='balanced', classes=classes, y=yEncoded)
+
         # weights = {}
         # for label, weight in self._weights.items():
         #     weights[self._le.transform([label])[0]] = weight
-        # sampleWeights = np.array([weights[label] for label in yEncoded])
+
+        sampleWeights = np.array([weights[label] for label in yEncoded])
         ys = dataset.toPandasSeries(yEncoded)
-        self._model.fit(xdf, ys)
+        self._model.fit(xdf, ys, sample_weight=sampleWeights)
 
     @override
     def predict(self, dfPredict):
