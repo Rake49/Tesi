@@ -6,18 +6,30 @@ class LabeledFeatureVectorDataset:
     def __init__(self, columnsList, targetFeatureName):
         self._columnsName = columnsList
         self._targetFeatureName = targetFeatureName
-        self._dataset: List[LabeledFeatureVector] = []
+        self._dataset: List = []
+        self._caseIDDominio = set()
 
-    def addLabeledFeatureVector(self, vector):
-        self._dataset.append(vector)
+    def addLabeledFeatureVector(self, caseId, vector):
+        self._dataset.append((caseId, vector))
+        self._caseIDDominio.add(caseId)
 
     def dataset(self):
         return self._dataset
+    
+    def caseIDDominio(self):
+        return self._caseIDDominio
+    
+    def selectCaseID(self, caseID):
+        trace = []
+        for id, featureVector in self._dataset:
+            if id == caseID:
+                trace.append((id, featureVector))
+        return trace
 
     def separateInputFromOutput(self):
         raw_data: list[tuple[List[float], str]] = [
             (labeledFeatureVector.featureVector(), labeledFeatureVector.label())
-            for labeledFeatureVector in self._dataset
+            for caseID, labeledFeatureVector in self._dataset
         ]
         x = list(map(lambda x: x[0], raw_data))
         y = list(map(lambda x: x[1], raw_data))

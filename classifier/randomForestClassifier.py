@@ -34,3 +34,6 @@ class RandomForestClassifier(Classifier):
     
     def weights(self):
         return self._weights
+    
+    def name(self):
+        return 'RandomForest'

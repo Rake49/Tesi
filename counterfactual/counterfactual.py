@@ -4,9 +4,7 @@ import pandas as pd
 import numpy as np
 
 class Counterfactual:
-    def __init__(self, trainSet, classifier, minPermittedRange, maxPermittedRange):
-        self._minPermittedRange = minPermittedRange
-        self._maxPermittedRange = maxPermittedRange
+    def __init__(self, trainSet, classifier):
         self._le = classifier.labelEncoder()
         x, y = trainSet.separateInputFromOutput()
 
@@ -27,12 +25,12 @@ class Counterfactual:
         )
         self._exp = dice_ml.Dice(diceData, model, method = 'random')
 
-    def generateCounterfactual(self, featureVector, columnsName, changeToOpposite, changeToLabel = None):
+    def generateCounterfactual(self, featureVector, caseID, columnsName, minPermittedRange, maxPermittedRange, changeToOpposite, changeToLabel = None):
         xdf = pd.DataFrame(featureVector, columns = columnsName)
         currentPermittedRange = {}
         i = 0
         for feature in columnsName:
-                currentPermittedRange[feature] = [self._minPermittedRange[i], self._maxPermittedRange[i]]
+                currentPermittedRange[feature] = [minPermittedRange[i], maxPermittedRange[i]]
                 i += 1
 
         cf = self._exp.generate_counterfactuals(
@@ -43,11 +41,15 @@ class Counterfactual:
             permitted_range = currentPermittedRange
         )
         cfDataframe = self.closestCounterfactual(featureVector, columnsName, cf.cf_examples_list[0].final_cfs_df)
-        cfDataframe['Label'] = self._le.inverse_transform(cfDataframe['Label'].astype(int))
+        cfDataframe['Predicted'] = self._le.inverse_transform(cfDataframe['Label'].astype(int))
         cfDataframe['Type'] = 'Counterfactual'
+        cfDataframe['CaseID'] = ""
+        cfDataframe['PrefixLength'] = ""
         originalInstanceDf = cf.cf_examples_list[0].test_instance_df
         originalInstanceDf['Type'] = 'Original'
-        originalInstanceDf['Label'] = self._le.inverse_transform(originalInstanceDf['Label'].astype(int))
+        originalInstanceDf['Predicted'] = self._le.inverse_transform(originalInstanceDf['Label'].astype(int))
+        originalInstanceDf['CaseID'] = caseID
+        originalInstanceDf['PrefixLength'] = sum(featureVector[0])
         return pd.concat([originalInstanceDf, cfDataframe])
     
     def closestCounterfactual(self, originalVector, columnsNames, cf):
@@ -57,6 +59,3 @@ class Counterfactual:
         bestIndex = np.argmin(distances)
         return cf.iloc[[bestIndex]].copy()
          
-    
-    def exportToExcel(self, dfToExport, pathOut):
-        dfToExport.to_excel(pathOut, index = False)

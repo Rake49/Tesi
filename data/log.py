@@ -63,7 +63,7 @@ class Log:
         for caseID, trace in self._log.items():
             subtraces = trace.subtraces()
             for subtrace in subtraces:
-                labeledFeatureVectorList.addLabeledFeatureVector(subtrace.transformToLabeledFeatureVector(self._dominio))
+                labeledFeatureVectorList.addLabeledFeatureVector(caseID, subtrace.transformToLabeledFeatureVector(self._dominio))
         return labeledFeatureVectorList
     
     def __str__(self):
