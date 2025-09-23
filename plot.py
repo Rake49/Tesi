@@ -32,6 +32,7 @@ def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics
     f1Scores = []
     macroF1Scores = []
     accuracyScores = []
+    
 
     for classifierName in classifierNames:
         eval = evaluatorsDict[classifierName]
@@ -40,13 +41,14 @@ def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics
         f1Scores.append(eval.f1())
         macroF1Scores.append(eval.macroF1())
         accuracyScores.append(eval.accuracy())
+        classReports = eval.classReport()
     data = {
         'Precision': precisionScores,
         'Recall': recallScores,
         'F1-Score': f1Scores,
         'Macro F1': macroF1Scores,
         'Accuracy': accuracyScores
-    }
+    }.update(classReports)
     dfMetrics = pd.DataFrame(data, index = classifierNames)
 
     outputDir = os.path.dirname(pathOUT)

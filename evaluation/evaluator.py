@@ -3,6 +3,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
 from sklearn.utils.class_weight import compute_sample_weight
 import numpy as np
 
@@ -33,6 +34,9 @@ class Evaluator:
     
     def accuracy(self):
         return accuracy_score(self._actual, self._predictions, sample_weight=self._sampleWeights)
+    
+    def classReport(self):
+        return classification_report(self._actual, self._predictions, labels=self._labels, digits=3, output_dict=True)
     
     def labels(self):
         return self._labels
