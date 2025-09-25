@@ -10,20 +10,20 @@ class RandomForestClassifier(Classifier):
     def __init__(self, randomState: int, weights):
         super().__init__()
         self._le = LabelEncoder()
-        # self._weights = weights
-        self._model: RFC = RFC(random_state = randomState, class_weight='balanced')
+        self._weights = weights
+        self._model: RFC = RFC(random_state = randomState)
 
     @override
     def fit(self, dataset):
         x, y = dataset.separateInputFromOutput()
         xdf = dataset.toPandasDF(x)
         yEncoded = self._le.fit_transform(y)
-        # weights = {}
-        # for label, weight in self._weights.items():
-        #     weights[self._le.transform([label])[0]] = weight
-        # sampleWeights = np.array([weights[label] for label in yEncoded])
+        weights = {}
+        for label, weight in self._weights.items():
+            weights[self._le.transform([label])[0]] = weight
+        sampleWeights = np.array([weights[label] for label in yEncoded])
         ys = dataset.toPandasSeries(yEncoded)
-        self._model.fit(xdf, ys)
+        self._model.fit(xdf, ys, sample_weight=sampleWeights)
 
     @override
     def predict(self, dfPredict):

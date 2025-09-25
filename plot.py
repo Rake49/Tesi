@@ -32,7 +32,6 @@ def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics
     f1Scores = []
     macroF1Scores = []
     accuracyScores = []
-    
 
     for classifierName in classifierNames:
         eval = evaluatorsDict[classifierName]
@@ -41,14 +40,13 @@ def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics
         f1Scores.append(eval.f1())
         macroF1Scores.append(eval.macroF1())
         accuracyScores.append(eval.accuracy())
-        classReports = eval.classReport()
     data = {
         'Precision': precisionScores,
         'Recall': recallScores,
         'F1-Score': f1Scores,
         'Macro F1': macroF1Scores,
         'Accuracy': accuracyScores
-    }.update(classReports)
+    }
     dfMetrics = pd.DataFrame(data, index = classifierNames)
 
     outputDir = os.path.dirname(pathOUT)
@@ -58,3 +56,12 @@ def exportMetricsToExcel(evaluatorsDict, pathOUT="statistiche/performanceMetrics
         dfMetrics.to_excel(pathOUT, index=True)
     except Exception as e:
         print(f"Errore durante l'esportazione delle metriche in Excel: {e}")
+
+def exportClassificationReportToExcel(evaluatorsDict):
+    classifierNames = list(evaluatorsDict.keys())
+    for classifierName in classifierNames:
+        eval = evaluatorsDict[classifierName]
+        classReport = eval.classReport()
+        df = pd.DataFrame(classReport)
+        path = f"statistiche/{classifierName.replace(" ", "")}ClassificationReport.xlsx"
+        df.to_excel(path, index=True)

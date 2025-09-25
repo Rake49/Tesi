@@ -10,7 +10,7 @@ class XGBoostClassifier(Classifier):
     def __init__(self, randomState: int, weights):
         super().__init__()
         self._le = LabelEncoder()
-        # self._weights = weights
+        self._weights = weights
         self._model: XGB = XGB(random_state = randomState)
 
     @override
@@ -18,12 +18,12 @@ class XGBoostClassifier(Classifier):
         x, y = dataset.separateInputFromOutput()
         xdf = dataset.toPandasDF(x)
         yEncoded = self._le.fit_transform(y)
-        classes = np.unique(yEncoded)
-        weights = compute_class_weight(class_weight='balanced', classes=classes, y=yEncoded)
+        # classes = np.unique(yEncoded)
+        # weights = compute_class_weight(class_weight='balanced', classes=classes, y=yEncoded)
 
-        # weights = {}
-        # for label, weight in self._weights.items():
-        #     weights[self._le.transform([label])[0]] = weight
+        weights = {}
+        for label, weight in self._weights.items():
+            weights[self._le.transform([label])[0]] = weight
 
         sampleWeights = np.array([weights[label] for label in yEncoded])
         ys = dataset.toPandasSeries(yEncoded)

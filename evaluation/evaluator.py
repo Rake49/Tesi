@@ -36,7 +36,7 @@ class Evaluator:
         return accuracy_score(self._actual, self._predictions, sample_weight=self._sampleWeights)
     
     def classReport(self):
-        return classification_report(self._actual, self._predictions, labels=self._labels, digits=3, output_dict=True)
+        return classification_report(self._actual, self._predictions, labels=self._labels, output_dict=True)
     
     def labels(self):
         return self._labels

@@ -3,6 +3,7 @@ from classifier import RandomForestClassifier, XGBoostClassifier
 from evaluation import Evaluator
 from plot import plotConfusionMatrix
 from plot import exportMetricsToExcel
+from plot import exportClassificationReportToExcel
 from counterfactual import Counterfactual
 import pandas as pd
 from sklearn.utils.class_weight import compute_class_weight
@@ -32,9 +33,8 @@ def alternate_rows_style(row):
     return ['background-color: #faf5e9' if row.name % 2 != 1 else '' for _ in row]
 
 def highlight_deviant(val):
-    # Ho aggiunto anche la gestione di 'Deviant' maiuscolo per sicurezza
     if isinstance(val, str) and 'deviant' in val.lower():
-        return 'background-color: #ffcccb' # Rosso chiaro
+        return 'background-color: #ffcccb'
     return ''
 
 def main():
@@ -43,10 +43,10 @@ def main():
     trainSet = trainSetLog.transformToLabeledFeatureVectorList()
     testSet = testSetLog.transformToLabeledFeatureVectorList()
 
-    randomForest = RandomForestClassifier(42, {'deviant': 5, 'regular': 1})
+    randomForest = RandomForestClassifier(42, {'deviant': 9, 'regular': 1})
     randomForest.fit(trainSet)
 
-    xgb = XGBoostClassifier(42, {'deviant': 5, 'regular': 1})
+    xgb = XGBoostClassifier(42, {'deviant': 9, 'regular': 1})
     xgb.fit(trainSet)
 
     rfEval = Evaluator(testSet, randomForest, log.labels())
@@ -58,6 +58,7 @@ def main():
     plotConfusionMatrix(rfEval, "RandomForest")
     plotConfusionMatrix(xgbEval, "XGBoost")
     exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
+    exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
 
     classifiers = [randomForest, xgb]
     labels = ['deviant', 'regular']
