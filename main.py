@@ -6,7 +6,8 @@ from plot import exportMetricsToExcel
 from plot import exportClassificationReportToExcel
 from counterfactual import Counterfactual
 import pandas as pd
-from sklearn.utils.class_weight import compute_class_weight
+import os
+import shutil
 
 
 def getCFTraceIDForClassifier(dataset, classifier, wantedPrediction, originalLabel):
@@ -30,7 +31,11 @@ def maxPermittedRange(featureVector):
     return [max + 5] * len(featureVector)
 
 def alternate_rows_style(row):
-    return ['background-color: #faf5e9' if row.name % 2 != 1 else '' for _ in row]
+    # return ['background-color: #faf5e9' if row.name % 2 != 1 else '' for _ in row]
+    if row['Type'] == 'Original':
+        return ['background-color: #faf5e9'] * len(row)
+    else:
+        return [''] * len(row)
 
 def highlight_deviant(val):
     if isinstance(val, str) and 'deviant' in val.lower():
@@ -61,17 +66,32 @@ def main():
     exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
 
     classifiers = [randomForest, xgb]
-    labels = ['deviant', 'regular']
     for classifier in classifiers:
-        for label in labels:
-            ID = getCFTraceIDForClassifier(testSet, classifier, 'deviant', label)
-            if ID == None:
-                continue
-            subtraces = testSet.selectCaseID(ID)
+        if os.path.exists(f"statistiche/{classifier.name()}Counterfactuals"):
+            shutil.rmtree(f"statistiche/{classifier.name()}Counterfactuals")
+        caseIDList = testSet.caseIDDominio()
+        i = 0
+        for caseID in caseIDList:
+            i += 1
+            print(i)
+            subtraces = testSet.selectCaseID(caseID)
             listForDataFrame = []
-            for caseID, labeledFeatureVector in subtraces:
-                counterfactual = Counterfactual(trainSet, classifier)
-                cfDataFrame = counterfactual.generateCounterfactual(
+            counterfactual = Counterfactual(trainSet, classifier)
+            allRegular = True
+            for _, labeledFeatureVector in subtraces:
+                fv = labeledFeatureVector.featureVector()
+                label = labeledFeatureVector.label()
+                pred = classifier.decode(classifier.predict(testSet.toPandasDF([fv])))[0]
+                if pred == 'regular':
+                    cfDataFrame = pd.DataFrame([fv], columns=testSet.columnsName())
+                    cfDataFrame['CaseID'] = caseID
+                    cfDataFrame['PrefixLength'] = sum(fv)
+                    cfDataFrame['Predicted'] = pred
+                    cfDataFrame['Type'] = 'Original'
+                    cfDataFrame['Label'] = ""
+                else:
+                    allRegular = False
+                    cfDataFrame = counterfactual.generateCounterfactual(
                     [labeledFeatureVector.featureVector()], 
                     caseID, 
                     trainSet.columnsName(),
@@ -91,7 +111,11 @@ def main():
                 cfDataFrame = cfDataFrame[newOrder]
                 listForDataFrame.append(cfDataFrame)
             finalDataFrame = pd.concat(listForDataFrame, ignore_index=True)
-            pathOut = f"statistiche/counterfactuals_{classifier.name()}_actual{label}_predDeviant.xlsx"
+
+            pathOut = f"statistiche/{classifier.name()}Counterfactuals/{'_' if allRegular else ''}{caseID}.xlsx"
+            outputDir = os.path.dirname(pathOut)
+            if outputDir and not os.path.exists(outputDir):
+                os.makedirs(outputDir)
             styler = finalDataFrame.style
             styler = styler.apply(alternate_rows_style, axis=1)
             styler = styler.map(highlight_deviant, subset=['Actual', 'Predicted'])
