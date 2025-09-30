@@ -8,7 +8,16 @@ from counterfactual import Counterfactual
 import pandas as pd
 import os
 import shutil
+import random
+import numpy as np
+from statistics import mean
 
+def set_seed(seed):
+    random.seed(seed)
+    # os.environ['PYTHONHASHSEED'] = str(seed)  eseguire $env:PYTHONHASHSEED = "42" nel terminale prima dell'esecuzione
+    np.random.seed(seed)
+
+set_seed(42)
 
 def getCFTraceIDForClassifier(dataset, classifier, wantedPrediction, originalLabel):
     caseIDList = dataset.caseIDDominio()
@@ -23,26 +32,41 @@ def getCFTraceIDForClassifier(dataset, classifier, wantedPrediction, originalLab
 def minPermittedRange(featureVector):
     return featureVector
 
-def maxPermittedRange(featureVector):
-    max = 0
-    for val in featureVector:
-        if val > max:
-            max = val
-    return [max + 5] * len(featureVector)
+def maxPermittedRange(featureVector, max):
+    return [value + max for value in featureVector]
 
 def alternate_rows_style(row):
     # return ['background-color: #faf5e9' if row.name % 2 != 1 else '' for _ in row]
+    # e9ecef
     if row['Type'] == 'Original':
-        return ['background-color: #faf5e9'] * len(row)
+        return ['background-color: #e9ecef'] * len(row)
     else:
         return [''] * len(row)
 
 def highlight_deviant(val):
+    # fff3cd
+    # c3e6cb
     if isinstance(val, str) and 'deviant' in val.lower():
+        return 'background-color: #fff3cd'
+    return ''
+
+def highlight_unable(val):
+    # ffe0b2
+    if isinstance(val, str) and 'unable' in val.lower():
         return 'background-color: #ffcccb'
     return ''
 
-def main():
+def dataFrameForPrefix(caseID, pred, fv, columnsNames, type):
+    cfDataFrame = pd.DataFrame([fv], columns=columnsNames)
+    cfDataFrame['CaseID'] = caseID
+    cfDataFrame['PrefixLength'] = sum(fv)
+    cfDataFrame['Predicted'] = pred
+    cfDataFrame['Type'] = type
+    cfDataFrame['Label'] = ""
+    return cfDataFrame
+
+
+def main(max):
     log = Log("sepsis_cases_1.csv", "fileConfig.json")
     trainSetLog, testSetLog = log.split(0.66)
     trainSet = trainSetLog.transformToLabeledFeatureVectorList()
@@ -65,40 +89,61 @@ def main():
     exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
     exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
 
+    info = {}
     classifiers = [randomForest, xgb]
     for classifier in classifiers:
-        if os.path.exists(f"statistiche/{classifier.name()}Counterfactuals"):
-            shutil.rmtree(f"statistiche/{classifier.name()}Counterfactuals")
+        if os.path.exists(f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}"):
+            shutil.rmtree(f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}")
         caseIDList = testSet.caseIDDominio()
+        numPredDev = 0
+        numTruePos = 0
+        numFalsePos = 0
+        numCFOfTrue = 0
+        numCFOfFalse = 0
+        distancesForTrue = []
         i = 0
+        counterfactual = Counterfactual(trainSet, classifier)
         for caseID in caseIDList:
             i += 1
-            print(i)
+            print(i, caseID)
             subtraces = testSet.selectCaseID(caseID)
             listForDataFrame = []
-            counterfactual = Counterfactual(trainSet, classifier)
             allRegular = True
+            someUnable = False
             for _, labeledFeatureVector in subtraces:
+                isTruePos = False
                 fv = labeledFeatureVector.featureVector()
                 label = labeledFeatureVector.label()
                 pred = classifier.decode(classifier.predict(testSet.toPandasDF([fv])))[0]
                 if pred == 'regular':
-                    cfDataFrame = pd.DataFrame([fv], columns=testSet.columnsName())
-                    cfDataFrame['CaseID'] = caseID
-                    cfDataFrame['PrefixLength'] = sum(fv)
-                    cfDataFrame['Predicted'] = pred
-                    cfDataFrame['Type'] = 'Original'
-                    cfDataFrame['Label'] = ""
+                    cfDataFrame = dataFrameForPrefix(caseID, pred, fv, testSet.columnsName(), 'Original')
                 else:
                     allRegular = False
-                    cfDataFrame = counterfactual.generateCounterfactual(
-                    [labeledFeatureVector.featureVector()], 
-                    caseID, 
-                    trainSet.columnsName(),
-                    minPermittedRange(labeledFeatureVector.featureVector()), 
-                    maxPermittedRange(labeledFeatureVector.featureVector()),  
-                    False,
-                    'regular')
+                    numPredDev += 1
+                    if label == 'deviant':
+                        numTruePos += 1
+                        isTruePos = True
+                    else:
+                        numFalsePos += 1
+                    cfDataFrame, distance = counterfactual.generateCounterfactual(
+                        [labeledFeatureVector.featureVector()], 
+                        caseID, 
+                        trainSet.columnsName(),
+                        minPermittedRange(labeledFeatureVector.featureVector()), 
+                        maxPermittedRange(labeledFeatureVector.featureVector(), max),  
+                        False,
+                        'regular')
+                    if cfDataFrame is False:
+                        someUnable = True
+                        cfDataFrame = pd.concat([dataFrameForPrefix(caseID, pred, fv, testSet.columnsName(), 'Original'), 
+                                                dataFrameForPrefix(caseID, 'Unable', [np.nan]*len(testSet.columnsName()), testSet.columnsName(), 'Counterfactual')], 
+                                                ignore_index=True)
+                    else:
+                        if isTruePos:
+                            numCFOfTrue += 1
+                            distancesForTrue.append(distance)
+                        else:
+                            numCFOfFalse += 1
                 cfDataFrame['Actual'] = label
                 allColumns = list(cfDataFrame.columns)
                 allColumns.remove('CaseID')
@@ -112,16 +157,33 @@ def main():
                 listForDataFrame.append(cfDataFrame)
             finalDataFrame = pd.concat(listForDataFrame, ignore_index=True)
 
-            pathOut = f"statistiche/{classifier.name()}Counterfactuals/{'_' if allRegular else ''}{caseID}.xlsx"
+            pathOut = f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}/{'#' if someUnable else ''}{'_' if allRegular else ''}{caseID}.xlsx"
             outputDir = os.path.dirname(pathOut)
             if outputDir and not os.path.exists(outputDir):
                 os.makedirs(outputDir)
             styler = finalDataFrame.style
             styler = styler.apply(alternate_rows_style, axis=1)
             styler = styler.map(highlight_deviant, subset=['Actual', 'Predicted'])
+            styler = styler.map(highlight_unable, subset=['Predicted'])
             styler.to_excel(pathOut, engine='openpyxl', index = False)
+        info[classifier.name()] = [numPredDev, numTruePos, numFalsePos, numCFOfTrue, numCFOfFalse, mean(distancesForTrue)]
+    return info
 
 if __name__ == "__main__":
-    main()
+    columns = ["Predetti deviant", "True Positive", "False Positive", "Numero di cf generati sui true positive", 
+               "Numero di cf generati sui false positive", "Distanza media nei true positive"]
+    dfList = []
+    for max in range(1, 6):
+        info = main(max)
+        df = pd.DataFrame.from_dict(info, orient='index', columns=columns)
+        df.reset_index(inplace=True)
+        df.rename(columns={'index': 'Classificatore'}, inplace=True)
+        df['Valore massimo per i counterfactual'] = max
+        dfList.append(df)
+    outPath = "statistiche/summaryReport.xlsx"
+    finalDF = pd.concat(dfList, ignore_index=True)
+    columnOrder = ['Valore massimo per i counterfactual', 'Classificatore'] + columns
+    finalDF = finalDF[columnOrder]
+    finalDF.to_excel(outPath, index=False)
 
     
