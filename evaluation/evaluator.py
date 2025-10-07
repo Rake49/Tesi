@@ -38,6 +38,9 @@ class Evaluator:
     def classReport(self):
         return classification_report(self._actual, self._predictions, labels=self._labels, output_dict=True)
     
+    def f1Deviant(self):
+        return f1_score(self._actual, self._predictions, pos_label='deviant', average = 'binary')
+    
     def labels(self):
         return self._labels
     

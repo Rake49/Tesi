@@ -66,16 +66,15 @@ def dataFrameForPrefix(caseID, pred, fv, columnsNames, type):
     return cfDataFrame
 
 
-def main(max):
-    log = Log("sepsis_cases_1.csv", "fileConfig.json")
+def main(datasetName, fileConfig, rfWeights, xgbWeights, max):
+    log = Log(datasetName, fileConfig)
     trainSetLog, testSetLog = log.split(0.66)
     trainSet = trainSetLog.transformToLabeledFeatureVectorList()
     testSet = testSetLog.transformToLabeledFeatureVectorList()
-
-    randomForest = RandomForestClassifier(42, {'deviant': 9, 'regular': 1})
+    randomForest = RandomForestClassifier(42, rfWeights)
     randomForest.fit(trainSet)
 
-    xgb = XGBoostClassifier(42, {'deviant': 9, 'regular': 1})
+    xgb = XGBoostClassifier(42, xgbWeights)
     xgb.fit(trainSet)
 
     rfEval = Evaluator(testSet, randomForest, log.labels())
@@ -84,16 +83,17 @@ def main(max):
     print("recall: ", rfEval.recall(), xgbEval.recall())
     print("f1: ", rfEval.f1(), xgbEval.f1())
 
-    plotConfusionMatrix(rfEval, "RandomForest")
-    plotConfusionMatrix(xgbEval, "XGBoost")
+    plotConfusionMatrix(rfEval, f"RandomForest-{datasetName}")
+    plotConfusionMatrix(xgbEval, f"XGBoost-{datasetName}")
     exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
     exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
 
     info = {}
     classifiers = [randomForest, xgb]
     for classifier in classifiers:
-        if os.path.exists(f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}"):
-            shutil.rmtree(f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}")
+        path = f"statistiche/bpic2012{classifier.name()}CounterfactualsWithMax_{max}"
+        if os.path.exists(path):
+            shutil.rmtree(path)
         caseIDList = testSet.caseIDDominio()
         numPredDev = 0
         numTruePos = 0
@@ -157,7 +157,7 @@ def main(max):
                 listForDataFrame.append(cfDataFrame)
             finalDataFrame = pd.concat(listForDataFrame, ignore_index=True)
 
-            pathOut = f"statistiche/{classifier.name()}CounterfactualsWithMax_{max}/{'#' if someUnable else ''}{'_' if allRegular else ''}{caseID}.xlsx"
+            pathOut = path + f"/{'#' if someUnable else ''}{'_' if allRegular else ''}{caseID}.xlsx"
             outputDir = os.path.dirname(pathOut)
             if outputDir and not os.path.exists(outputDir):
                 os.makedirs(outputDir)
@@ -170,20 +170,34 @@ def main(max):
     return info
 
 if __name__ == "__main__":
+    # "sepsis_cases_1.csv", "SEPSISfileConfig.json", {'deviant': 9, 'regular': 1}, {'deviant': 9, 'regular': 1}
+    # "bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': 2, 'regular': 1}, {'deviant': 2, 'regular': 1}
+    # "BPIC11_f1.csv", "BPIC11fileConfig.json", {'deviant': 5, 'regular': 2}, {'deviant': 2, 'regular': 1}
+
     columns = ["Predetti deviant", "True Positive", "False Positive", "Numero di cf generati sui true positive", 
                "Numero di cf generati sui false positive", "Distanza media nei true positive"]
     dfList = []
     for max in range(1, 6):
-        info = main(max)
+        info = main("bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': 2, 'regular': 1}, {'deviant': 2, 'regular': 1}, max)
         df = pd.DataFrame.from_dict(info, orient='index', columns=columns)
         df.reset_index(inplace=True)
         df.rename(columns={'index': 'Classificatore'}, inplace=True)
         df['Valore massimo per i counterfactual'] = max
         dfList.append(df)
-    outPath = "statistiche/summaryReport.xlsx"
+    outPath = "statistiche/bpic2012summaryReport.xlsx"
     finalDF = pd.concat(dfList, ignore_index=True)
     columnOrder = ['Valore massimo per i counterfactual', 'Classificatore'] + columns
     finalDF = finalDF[columnOrder]
     finalDF.to_excel(outPath, index=False)
 
-    
+    # columns = ['Classificatore', 'Peso deviant', 'Peso regular', 'F1 deviant']
+    # dfList = []
+    # for i in range(1, 11):
+    #     for j in range(1, 11):
+    #         rf, xgb = main("bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': i, 'regular': j}, {'deviant': i, 'regular': j}, 1)
+    #         row1 = ['Random Forest', i, j, rf]
+    #         row2 = ['XGBoost', i, j, xgb]
+    #         dfList.append(pd.DataFrame([row1], columns=columns))
+    #         dfList.append(pd.DataFrame([row2], columns=columns))
+    # finalDF = pd.concat(dfList, ignore_index=True)
+    # finalDF.to_excel("statistiche/bpic2012WeightsTries.xlsx", index=False)
