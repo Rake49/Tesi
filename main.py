@@ -85,13 +85,48 @@ def main(datasetName, fileConfig, rfWeights, xgbWeights, max):
 
     plotConfusionMatrix(rfEval, f"RandomForest-{datasetName}")
     plotConfusionMatrix(xgbEval, f"XGBoost-{datasetName}")
-    exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
-    exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
+    # exportMetricsToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
+    # exportClassificationReportToExcel({"Random Forest": rfEval, "XGBoost": xgbEval})
 
     info = {}
+
+    # xtn, xfp, xfn, xtp = xgbEval.confusionMatrix().ravel().tolist()
+    # xClassRep = xgbEval.classReport()
+    # xpd = xClassRep['deviant']['precision']
+    # xpr = xClassRep['regular']['precision']
+    # xpmacro = xClassRep['macro avg']['precision']
+    # xpweigh = xClassRep['weighted avg']['precision']
+    # xrd = xClassRep['deviant']['recall']
+    # xrr = xClassRep['regular']['recall']
+    # xrmacro = xClassRep['macro avg']['recall']
+    # xrweigh = xClassRep['weighted avg']['recall']
+    # xf1d = xgbEval.f1Deviant()
+    # xf1r = xClassRep['regular']['f1-score']
+    # xf1macro = xClassRep['macro avg']['f1-score']
+    # xf1weigh = xClassRep['weighted avg']['f1-score']
+    # xaccuracy = xClassRep['accuracy']
+    # info['x'] = [xtp, xtn, xfp, xfn, xpd, xpr, xpmacro, xpweigh, xrd, xrr, xrmacro, xrweigh, xf1d, xf1r, xf1macro, xf1weigh, xaccuracy]
+
+    # rtn, rfp, rfn, rtp = rfEval.confusionMatrix().ravel().tolist()
+    # rClassRep = rfEval.classReport()
+    # rpd = rClassRep['deviant']['precision']
+    # rpr = rClassRep['regular']['precision']
+    # rpmacro = rClassRep['macro avg']['precision']
+    # rpweigh = rClassRep['weighted avg']['precision']
+    # rrd = rClassRep['deviant']['recall']
+    # rrr = rClassRep['regular']['recall']
+    # rrmacro = rClassRep['macro avg']['recall']
+    # rrweigh = rClassRep['weighted avg']['recall']
+    # rf1d = rfEval.f1Deviant()
+    # rf1r = rClassRep['regular']['f1-score']
+    # rf1macro = rClassRep['macro avg']['f1-score']
+    # rf1weigh = rClassRep['weighted avg']['f1-score']
+    # raccuracy = rClassRep['accuracy']
+    # info['r'] = [rtp, rtn, rfp, rfn, rpd, rpr, rpmacro, rpweigh, rrd, rrr, rrmacro, rrweigh, rf1d, rf1r, rf1macro, rf1weigh, raccuracy]
+
     classifiers = [randomForest, xgb]
     for classifier in classifiers:
-        path = f"statistiche/bpic2012{classifier.name()}CounterfactualsWithMax_{max}"
+        path = f"statistiche/bpic11{classifier.name()}CounterfactualsWithMax_{max}"
         if os.path.exists(path):
             shutil.rmtree(path)
         caseIDList = testSet.caseIDDominio()
@@ -172,32 +207,34 @@ def main(datasetName, fileConfig, rfWeights, xgbWeights, max):
 if __name__ == "__main__":
     # "sepsis_cases_1.csv", "SEPSISfileConfig.json", {'deviant': 9, 'regular': 1}, {'deviant': 9, 'regular': 1}
     # "bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': 2, 'regular': 1}, {'deviant': 2, 'regular': 1}
-    # "BPIC11_f1.csv", "BPIC11fileConfig.json", {'deviant': 5, 'regular': 2}, {'deviant': 2, 'regular': 1}
+    # "BPIC11_f1.csv", "BPIC11fileConfig.json", {'deviant': 7, 'regular': 1}, {'deviant': 2, 'regular': 1}
 
     columns = ["Predetti deviant", "True Positive", "False Positive", "Numero di cf generati sui true positive", 
                "Numero di cf generati sui false positive", "Distanza media nei true positive"]
     dfList = []
     for max in range(1, 6):
-        info = main("bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': 2, 'regular': 1}, {'deviant': 2, 'regular': 1}, max)
+        info = main("BPIC11_f1.csv", "BPIC11fileConfig.json", {'deviant': 7, 'regular': 1}, {'deviant': 2, 'regular': 1}, max)
         df = pd.DataFrame.from_dict(info, orient='index', columns=columns)
         df.reset_index(inplace=True)
         df.rename(columns={'index': 'Classificatore'}, inplace=True)
         df['Valore massimo per i counterfactual'] = max
         dfList.append(df)
-    outPath = "statistiche/bpic2012summaryReport.xlsx"
+    outPath = "statistiche/bpic11summaryReport.xlsx"
     finalDF = pd.concat(dfList, ignore_index=True)
     columnOrder = ['Valore massimo per i counterfactual', 'Classificatore'] + columns
     finalDF = finalDF[columnOrder]
     finalDF.to_excel(outPath, index=False)
 
-    # columns = ['Classificatore', 'Peso deviant', 'Peso regular', 'F1 deviant']
+    # columns = ['Classificatore', 'Peso deviant', 'Peso regular', 'TP', 'TN', 'FP', 'FN', 'Precision Deviant', 'Precision Regular', 'Precision Macro Avg', 'Precision Weighted Avg', 'Recall Deviant', 'Recall Regular', 'Recall Macro Avg', 'Recall Weighted Avg', 'F1 Deviant',	'F1 Regular', 'F1 Macro Avg', 'F1 Weighted Avg', 'Accuracy']
+    
+
     # dfList = []
     # for i in range(1, 11):
     #     for j in range(1, 11):
-    #         rf, xgb = main("bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': i, 'regular': j}, {'deviant': i, 'regular': j}, 1)
-    #         row1 = ['Random Forest', i, j, rf]
-    #         row2 = ['XGBoost', i, j, xgb]
+    #         info = main("bpic2012_O_ACCEPTED-COMPLETE.csv", "BPIC2012fileConfig.json", {'deviant': i, 'regular': j}, {'deviant': i, 'regular': j}, 1)
+    #         row1 = ['Random Forest', i, j] + info['r']
+    #         row2 = ['XGBoost', i, j] + info['x']
     #         dfList.append(pd.DataFrame([row1], columns=columns))
     #         dfList.append(pd.DataFrame([row2], columns=columns))
     # finalDF = pd.concat(dfList, ignore_index=True)
-    # finalDF.to_excel("statistiche/bpic2012WeightsTries.xlsx", index=False)
+    # finalDF.to_excel("statistiche/bpic2012Metriche.xlsx", index=False)

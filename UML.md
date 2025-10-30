@@ -1,4 +1,8 @@
 ```mermaid
+---
+config:
+  theme: base
+---
 classDiagram
     direction LR
     note for datetime "datetime è una classe per un tipo di dato in python"
@@ -54,14 +58,11 @@ classDiagram
     Evaluator ..> FeatureVector : << use >>
     Trace ..> datetime : << use >>
     Counterfactual ..> LabeledFeatureVectorDataset : << use >> 
-    Counterfactual "1" o-- "1" Classifier
     Counterfactual ..> FeatureVector : << use >>
     Counterfactual ..> List : << bind >> (str)
     LabeledFeatureVectorDataset "1" o-- "1" List : << bind >> (str, LabeledFeatureVector)
     LabeledFeatureVectorDataset "1" o-- "1" List : << bind >> (str)
     LabeledFeatureVectorDataset "1" o-- "1" str
-    
-
     namespace data {
         class Event {
             -activity: str
@@ -155,7 +156,6 @@ classDiagram
     namespace counterfactual {
         class Counterfactual {
             -explainer: Dice
-            -classifier: Classifier
             +Counterfactua(dataset: LabeledFeatureVectorDataset, classifier: Classifier)
             +generateCounterfactual(featureVector: FeatureVector, caseID: str, columnsName: List < str >, minPermittedRange: List < int >, maxPermittedRange: List < int >, changeToOpposite: bool, changeToLabel: str) DataFrame
             -closestCounterfactual(originalVector: FeatureVector, columnsName: List < str >, cf: CounterfactualExplanations) DataFrame
@@ -174,5 +174,6 @@ classDiagram
     }
     class datetime {
     }
+
 
 ```
